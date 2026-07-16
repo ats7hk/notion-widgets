@@ -1,1 +1,47 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip Clock</title>
+<style>
+:root{--bg:#fff;--card:#f2f2f2;--text:#111;--line:#d9d9d9;--shadow:rgba(0,0,0,.10)}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;background:var(--bg);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+body{display:grid;place-items:center}
+.clock{display:flex;align-items:center;justify-content:center;gap:clamp(7px,1.5vw,18px);width:100%;padding:12px}
+.group{display:flex;gap:clamp(5px,1vw,12px)}
+.separator{font-size:clamp(42px,11vw,115px);font-weight:700;color:var(--text);line-height:1;transform:translateY(-3%)}
+.digit{position:relative;width:clamp(55px,14vw,135px);height:clamp(78px,20vw,185px);perspective:800px}
+.card,.flip{position:absolute;inset:0;border-radius:clamp(10px,1.7vw,18px);overflow:hidden;color:var(--text)}
+.card{background:var(--card);box-shadow:0 5px 18px var(--shadow)}
+.top,.bottom,.flip-top,.flip-bottom{position:absolute;left:0;width:100%;height:50%;overflow:hidden;display:flex;justify-content:center;font-size:clamp(64px,16vw,155px);font-weight:700;line-height:1;background:var(--card);user-select:none}
+.top,.flip-top{top:0;align-items:flex-end;border-bottom:1px solid var(--line);transform-origin:bottom}
+.bottom,.flip-bottom{bottom:0;align-items:flex-start;border-top:1px solid #fff;transform-origin:top}
+.top span,.flip-top span{transform:translateY(50%)}
+.bottom span,.flip-bottom span{transform:translateY(-50%)}
+.flip{background:transparent;pointer-events:none}
+.flip-top,.flip-bottom{backface-visibility:hidden}
+.flip-top{z-index:2;animation:flipTop .32s ease-in forwards}
+.flip-bottom{transform:rotateX(90deg);animation:flipBottom .32s .32s ease-out forwards}
+@keyframes flipTop{from{transform:rotateX(0)}to{transform:rotateX(-90deg)}}
+@keyframes flipBottom{from{transform:rotateX(90deg)}to{transform:rotateX(0)}}
+</style>
+</head>
+<body>
+<main class="clock" aria-label="Flip clock">
+  <div class="group"><div class="digit"></div><div class="digit"></div></div>
+  <div class="separator">:</div>
+  <div class="group"><div class="digit"></div><div class="digit"></div></div>
+</main>
+<script>
+const digits=[...document.querySelectorAll(".digit")];
+function card(v){const e=document.createElement("div");e.className="card";e.innerHTML=`<div class="top"><span>${v}</span></div><div class="bottom"><span>${v}</span></div>`;return e}
+function time(){return new Date().toLocaleTimeString("en-GB",{hour12:false,hour:"2-digit",minute:"2-digit"}).replace(":","")}
+function init(){const v=time();digits.forEach((d,i)=>{d.dataset.value=v[i];d.appendChild(card(v[i]))})}
+function flip(d,n){const c=d.dataset.value;if(c===n)return;const old=d.querySelector(".card"),next=card(n);d.insertBefore(next,old);const f=document.createElement("div");f.className="flip";f.innerHTML=`<div class="flip-top"><span>${c}</span></div><div class="flip-bottom"><span>${n}</span></div>`;d.appendChild(f);setTimeout(()=>{old.remove();f.remove();d.dataset.value=n},680)}
+function update(){const v=time();digits.forEach((d,i)=>flip(d,v[i]))}
+init();setInterval(update,1000);
+</script>
+</body>
+</html>
