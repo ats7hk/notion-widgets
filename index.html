@@ -1,71 +1,334 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hong Kong Weather</title>
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"Noto Sans TC",sans-serif;color:#111}
-body{display:grid;place-items:center;overflow:hidden}
-.card{width:min(94vw,620px);padding:20px 24px;border-radius:24px;background:#f5f5f5;box-shadow:0 6px 22px rgba(0,0,0,.08)}
-.top{display:flex;justify-content:space-between;align-items:center;gap:14px}
-.location{font-size:clamp(18px,4vw,28px);font-weight:700}
-.updated{font-size:clamp(11px,2.5vw,15px);color:#666;margin-top:4px}
-.main{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
-.temp{font-size:clamp(52px,14vw,92px);font-weight:750;line-height:1}
-.icon{font-size:clamp(52px,14vw,90px)}
-.desc{font-size:clamp(18px,4vw,28px);font-weight:600;margin-top:8px}
-.details{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:clamp(14px,3vw,18px)}
-.error{font-size:18px;line-height:1.5}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countdown Widget</title>
+  <style>
+    :root {
+      --bg: rgba(255, 255, 255, 0.96);
+      --text: #111111;
+      --muted: #8e8e93;
+      --border: rgba(0, 0, 0, 0.08);
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+        "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .widget {
+      position: relative;
+      width: min(100%, 760px);
+      min-height: 104px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 58px 24px 26px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .countdown-line {
+      width: 100%;
+      text-align: center;
+      font-size: clamp(22px, 4.8vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .count-number {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .settings-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.05);
+      color: #555;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .dialog {
+      width: min(100%, 390px);
+      padding: 22px;
+      background: #ffffff;
+      color: #111111;
+      border-radius: 22px;
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.23);
+    }
+
+    .dialog h2 {
+      margin: 0 0 18px;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      color: #555;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid #d9d9de;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #111111;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #111111;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .action {
+      padding: 10px 15px;
+      border: 0;
+      border-radius: 12px;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .cancel {
+      background: #f1f1f3;
+      color: #111111;
+    }
+
+    .save {
+      background: #111111;
+      color: #ffffff;
+    }
+
+    @media (max-width: 480px) {
+      .widget {
+        min-height: 94px;
+        padding: 20px 52px 20px 18px;
+        border-radius: 20px;
+      }
+
+      .countdown-line {
+        font-size: 24px;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: rgba(28, 28, 30, 0.96);
+        --text: #f5f5f7;
+        --border: rgba(255, 255, 255, 0.10);
+        --shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      }
+
+      .settings-btn {
+        background: rgba(255, 255, 255, 0.08);
+        color: #dddddd;
+      }
+
+      .dialog {
+        background: #1c1c1e;
+        color: #ffffff;
+      }
+
+      label {
+        color: #c7c7cc;
+      }
+
+      input {
+        background: #2c2c2e;
+        border-color: #3a3a3c;
+        color: #ffffff;
+      }
+
+      .cancel {
+        background: #2c2c2e;
+        color: #ffffff;
+      }
+
+      .save {
+        background: #ffffff;
+        color: #111111;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="card" id="card">
-  <div class="top">
-    <div>
-      <div class="location">香港天氣</div>
-      <div class="updated" id="updated">更新中…</div>
+  <main class="widget">
+    <div class="countdown-line" aria-live="polite">
+      <span id="eventName">✈️ Japan Trip</span>
+      <span> : </span>
+      <span id="days" class="count-number">23</span>
+      <span id="dayWord"> days</span>
+    </div>
+
+    <button class="settings-btn" id="settingsBtn" aria-label="Edit countdown">⚙</button>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h2>Edit countdown</h2>
+
+      <label for="nameInput">Event name</label>
+      <input id="nameInput" type="text" placeholder="✈️ Japan Trip" />
+
+      <label for="dateInput">Event date</label>
+      <input id="dateInput" type="date" />
+
+      <div class="actions">
+        <button class="action cancel" id="cancelBtn">Cancel</button>
+        <button class="action save" id="saveBtn">Save</button>
+      </div>
     </div>
   </div>
-  <div class="main">
-    <div>
-      <div class="temp" id="temp">--°</div>
-      <div class="desc" id="desc">讀取天氣中</div>
-    </div>
-    <div class="icon" id="icon">⛅</div>
-  </div>
-  <div class="details">
-    <span id="humidity">濕度 --%</span>
-    <span id="wind">風速 -- km/h</span>
-    <span id="range">最高 --° / 最低 --°</span>
-  </div>
-</div>
-<script>
-const map={
-0:["晴朗","☀️"],1:["大致晴朗","🌤️"],2:["部分多雲","⛅"],3:["多雲","☁️"],
-45:["有霧","🌫️"],48:["霧凇","🌫️"],51:["毛毛雨","🌦️"],53:["毛毛雨","🌦️"],55:["較大毛毛雨","🌧️"],
-61:["小雨","🌦️"],63:["中雨","🌧️"],65:["大雨","🌧️"],71:["小雪","🌨️"],73:["中雪","🌨️"],75:["大雪","❄️"],
-80:["驟雨","🌦️"],81:["較大驟雨","🌧️"],82:["猛烈驟雨","⛈️"],95:["雷暴","⛈️"],96:["雷暴及冰雹","⛈️"],99:["強雷暴及冰雹","⛈️"]
-};
-async function load(){
- try{
-  const url="https://api.open-meteo.com/v1/forecast?latitude=22.3193&longitude=114.1694&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FHong_Kong&forecast_days=1";
-  const r=await fetch(url);
-  if(!r.ok) throw new Error("Weather request failed");
-  const d=await r.json(), c=d.current, daily=d.daily;
-  const info=map[c.weather_code]||["天氣狀況", "🌤️"];
-  temp.textContent=Math.round(c.temperature_2m)+"°";
-  desc.textContent=info[0]; icon.textContent=info[1];
-  humidity.textContent="濕度 "+Math.round(c.relative_humidity_2m)+"%";
-  wind.textContent="風速 "+Math.round(c.wind_speed_10m)+" km/h";
-  range.textContent="最高 "+Math.round(daily.temperature_2m_max[0])+"° / 最低 "+Math.round(daily.temperature_2m_min[0])+"°";
-  updated.textContent="最後更新 "+new Date().toLocaleTimeString("zh-HK",{hour:"2-digit",minute:"2-digit"});
- }catch(e){
-  card.innerHTML='<div class="error">暫時未能讀取香港天氣。請稍後重新整理。</div>';
- }
-}
-load();setInterval(load,15*60*1000);
-</script>
+
+  <script>
+    const eventNameEl = document.getElementById("eventName");
+    const daysEl = document.getElementById("days");
+    const dayWordEl = document.getElementById("dayWord");
+    const overlay = document.getElementById("overlay");
+    const nameInput = document.getElementById("nameInput");
+    const dateInput = document.getElementById("dateInput");
+
+    function defaultDate() {
+      const date = new Date();
+      date.setDate(date.getDate() + 23);
+      return date.toISOString().slice(0, 10);
+    }
+
+    let eventName =
+      localStorage.getItem("countdown-event-name") || "✈️ Japan Trip";
+
+    let eventDate =
+      localStorage.getItem("countdown-event-date") || defaultDate();
+
+    function getDaysRemaining() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const target = new Date(eventDate + "T00:00:00");
+      return Math.ceil((target - today) / 86400000);
+    }
+
+    function updateWidget() {
+      const days = getDaysRemaining();
+      eventNameEl.textContent = eventName;
+
+      if (days > 0) {
+        daysEl.textContent = days;
+        dayWordEl.textContent = days === 1 ? " day" : " days";
+      } else if (days === 0) {
+        daysEl.textContent = "Today";
+        dayWordEl.textContent = "";
+      } else {
+        const pastDays = Math.abs(days);
+        daysEl.textContent = pastDays;
+        dayWordEl.textContent =
+          pastDays === 1 ? " day ago" : " days ago";
+      }
+    }
+
+    function openSettings() {
+      nameInput.value = eventName;
+      dateInput.value = eventDate;
+      overlay.classList.add("open");
+    }
+
+    function closeSettings() {
+      overlay.classList.remove("open");
+    }
+
+    document.getElementById("settingsBtn").addEventListener("click", openSettings);
+    document.getElementById("cancelBtn").addEventListener("click", closeSettings);
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      const newName = nameInput.value.trim();
+      const newDate = dateInput.value;
+
+      if (newName) eventName = newName;
+      if (newDate) eventDate = newDate;
+
+      localStorage.setItem("countdown-event-name", eventName);
+      localStorage.setItem("countdown-event-date", eventDate);
+
+      updateWidget();
+      closeSettings();
+    });
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) closeSettings();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeSettings();
+      if (event.key === "Enter" && overlay.classList.contains("open")) {
+        document.getElementById("saveBtn").click();
+      }
+    });
+
+    updateWidget();
+    setInterval(updateWidget, 60000);
+  </script>
 </body>
 </html>
