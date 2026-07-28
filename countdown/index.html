@@ -1,1 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countdown Widget</title>
+  <style>
+    :root {
+      --bg: rgba(255, 255, 255, 0.96);
+      --text: #111111;
+      --muted: #8e8e93;
+      --border: rgba(0, 0, 0, 0.08);
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+        "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .widget {
+      position: relative;
+      width: min(100%, 760px);
+      min-height: 104px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 58px 24px 26px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .countdown-line {
+      width: 100%;
+      text-align: center;
+      font-size: clamp(22px, 4.8vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .count-number {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .settings-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.05);
+      color: #555;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .dialog {
+      width: min(100%, 390px);
+      padding: 22px;
+      background: #ffffff;
+      color: #111111;
+      border-radius: 22px;
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.23);
+    }
+
+    .dialog h2 {
+      margin: 0 0 18px;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      color: #555;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid #d9d9de;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #111111;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #111111;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .action {
+      padding: 10px 15px;
+      border: 0;
+      border-radius: 12px;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .cancel {
+      background: #f1f1f3;
+      color: #111111;
+    }
+
+    .save {
+      background: #111111;
+      color: #ffffff;
+    }
+
+    @media (max-width: 480px) {
+      .widget {
+        min-height: 94px;
+        padding: 20px 52px 20px 18px;
+        border-radius: 20px;
+      }
+
+      .countdown-line {
+        font-size: 24px;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: rgba(28, 28, 30, 0.96);
+        --text: #f5f5f7;
+        --border: rgba(255, 255, 255, 0.10);
+        --shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      }
+
+      .settings-btn {
+        background: rgba(255, 255, 255, 0.08);
+        color: #dddddd;
+      }
+
+      .dialog {
+        background: #1c1c1e;
+        color: #ffffff;
+      }
+
+      label {
+        color: #c7c7cc;
+      }
+
+      input {
+        background: #2c2c2e;
+        border-color: #3a3a3c;
+        color: #ffffff;
+      }
+
+      .cancel {
+        background: #2c2c2e;
+        color: #ffffff;
+      }
+
+      .save {
+        background: #ffffff;
+        color: #111111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="widget">
+    <div class="countdown-line" aria-live="polite">
+      <span id="eventName">✈️ Japan Trip</span>
+      <span> : </span>
+      <span id="days" class="count-number">23</span>
+      <span id="dayWord"> days</span>
+    </div>
+
+    <button class="settings-btn" id="settingsBtn" aria-label="Edit countdown">⚙</button>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h2>Edit countdown</h2>
+
+      <label for="nameInput">Event name</label>
+      <input id="nameInput" type="text" placeholder="✈️ Japan Trip" />
+
+      <label for="dateInput">Event date</label>
+      <input id="dateInput" type="date" />
+
+      <div class="actions">
+        <button class="action cancel" id="cancelBtn">Cancel</button>
+        <button class="action save" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const eventNameEl = document.getElementById("eventName");
+    const daysEl = document.getElementById("days");
+    const dayWordEl = document.getElementById("dayWord");
+    const overlay = document.getElementById("overlay");
+    const nameInput = document.getElementById("nameInput");
+    const dateInput = document.getElementById("dateInput");
+
+    function defaultDate() {
+      const date = new Date();
+      date.setDate(date.getDate() + 23);
+      return date.toISOString().slice(0, 10);
+    }
+
+    let eventName =
+      localStorage.getItem("countdown-event-name") || "✈️ Japan Trip";
+
+    let eventDate =
+      localStorage.getItem("countdown-event-date") || defaultDate();
+
+    function getDaysRemaining() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const target = new Date(eventDate + "T00:00:00");
+      return Math.ceil((target - today) / 86400000);
+    }
+
+    function updateWidget() {
+      const days = getDaysRemaining();
+      eventNameEl.textContent = eventName;
+
+      if (days > 0) {
+        daysEl.textContent = days;
+        dayWordEl.textContent = days === 1 ? " day" : " days";
+      } else if (days === 0) {
+        daysEl.textContent = "Today";
+        dayWordEl.textContent = "";
+      } else {
+        const pastDays = Math.abs(days);
+        daysEl.textContent = pastDays;
+        dayWordEl.textContent =
+          pastDays === 1 ? " day ago" : " days ago";
+      }
+    }
+
+    function openSettings() {
+      nameInput.value = eventName;
+      dateInput.value = eventDate;
+      overlay.classList.add("open");
+    }
+
+    function closeSettings() {
+      overlay.classList.remove("open");
+    }
+
+    document.getElementById("settingsBtn").addEventListener("click", openSettings);
+    document.getElementById("cancelBtn").addEventListener("click", closeSettings);
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      const newName = nameInput.value.trim();
+      const newDate = dateInput.value;
+
+      if (newName) eventName = newName;
+      if (newDate) eventDate = newDate;
+
+      localStorage.setItem("countdown-event-name", eventName);
+      localStorage.setItem("countdown-event-date", eventDate);
+
+      updateWidget();
+      closeSettings();
+    });
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) closeSettings();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeSettings();
+      if (event.key === "Enter" && overlay.classList.contains("open")) {
+        document.getElementById("saveBtn").click();
+      }
+    });
+
+    updateWidget();
+    setInterval(updateWidget, 60000);
+  </script>
+</body>
+</html>
